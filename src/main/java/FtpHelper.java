@@ -15,10 +15,6 @@ public class FtpHelper {
     private PrintWriter out;
     private Socket socket;
 
-    public FtpHelper(String user, String password, String filePath) throws IOException {
-        this(user, password, Properties.FTP_SERVER_IP, Properties.FTP_SERVER_PORT, filePath);
-    }
-
     public FtpHelper(String user, String password, String serverIp, int serverPort, String filePath) throws IOException {
         this.serverIp = serverIp;
         this.user = user;
@@ -196,5 +192,23 @@ public class FtpHelper {
         if (!response.startsWith("226")) {
             throw new IOException("File transfer failed");
         }
+    }
+    public String getServerIp() {
+        return serverIp;
+    }
+
+    public int getServerPort() {
+        return serverPort;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public String downloadFile(boolean isActive) throws IOException {
+        return isActive?downloadFileActiveMode():downloadFilePassiveMode();
+    }
+    public FtpHelper uploadFile(boolean isActive, String fileData) throws IOException {
+        return isActive?uploadFileInActiveMode(fileData):uploadFileInPassiveMode(fileData);
     }
 }

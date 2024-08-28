@@ -5,7 +5,7 @@ public class StudentManager {
     private List<Student> students;
 
     public StudentManager() {
-        this.students = new CopyOnWriteArrayList<>(); //многопоточный лист
+        this.students = new CopyOnWriteArrayList<>();
     }
 
     public List<Student> getStudents() {
@@ -47,23 +47,72 @@ public class StudentManager {
     }
 
     private int generateNewId() {
-        return students.stream()
-                .mapToInt(Student::getId)
-                .max()
-                .orElse(0) + 1;
+        int i = -1;
+        for (Student student : students) {
+            if (student.getId() > i) {
+                i = student.getId();
+            }
+        }
+        return ++i;
     }
 
     // Метод для парсинга JSON строки в список студентов
     private List<Student> parseJsonToList(String jsonString) {
         List<Student> students = new ArrayList<>();
-        String studentsArray = jsonString.substring(jsonString.indexOf("["), jsonString.lastIndexOf("]") + 1);
+        String studentsArray = jsonString.substring(jsonString.indexOf("[") + 1, jsonString.lastIndexOf("]"));
         String[] jsonObjects = studentsArray.split("(?<=\\}),\\s*(?=\\{)");
-
-        for (String jsonObject : jsonObjects) {
-            students.add(parseStudent(jsonObject));
+//        Map<String,String> map = getJsonObjects(studentsArray);
+//        boolean isAdd = false;
+//        for (Map.Entry<String,String> pair :
+//            map.entrySet() ) {
+//            Student student = new Student();
+//            switch (pair.getKey()) {
+//                case ("name"): {
+//                    student.setName(pair.getValue());
+//                    break;
+//                }
+//                case ("id"): {
+//                    student.setId(Integer.parseInt(pair.getValue()));
+//                    isAdd = true;
+//                    break;
+//                }
+//            }
+//            if (isAdd) {
+//                students.add(student);
+//            }
+//        }
+       for (String jsonObject : getJsonObjects(studentsArray)) {
+           students.add(parseStudent(jsonObject));
         }
 
         return students;
+    }
+
+    private List<String> getJsonObjects(String jsonString) {
+        List<String> result = new ArrayList<>();
+        boolean isStart = false;
+        StringBuilder builder = new StringBuilder();
+        for (char c:
+             jsonString.toCharArray()) {
+
+            if(c == '{' && !isStart){
+                isStart = true;
+            }else {
+                if (c == '}' && isStart) {
+                    isStart = false;
+                    if(builder.length() > 0){
+                        result.add(builder.toString());
+                        builder = new StringBuilder();
+                    }
+                }else {
+                    if(isStart ){
+                        builder.append(c);
+                    }
+                }
+            }
+
+        }
+        return result;
     }
 
     // Метод для парсинга одного JSON объекта в объект Student
@@ -99,7 +148,7 @@ public class StudentManager {
     }
 
     // Метод для преобразования списка студентов обратно в JSON строку
-    private String studentsToJsonString() {
+    public String studentsToJsonString() {
         StringBuilder json = new StringBuilder();
         json.append("{ \"students\": [");
 
